@@ -1,4 +1,4 @@
-function ResultTable = ProcessDoCResults(CellData, NDatacolumns, ROICoordinates, DensityROI, Path_name, ColoThres)
+function ResultTable = ProcessDoCResults(CellData, NDatacolumns, ROICoordinates, DensityROI, Path_name, ColoThres, DoCIndex)
 
 %cd('Degree_Of_Colocalisation')
 %         if exist('Statistic and Plots for Colocalization','dir')
@@ -13,17 +13,17 @@ mkdir(fullfile(Path_name, f1, 'Raw data maps with outliers removed')); % Plot 2
 mkdir(fullfile(Path_name, f1, 'Density and DoC maps')); % Plot 5
 
 
-Plot1=1; % Raw data 2 Colors
-Plot2=1; % 2 colors Removed outliers Data (DataNoOutliers)
-Plot3=0; % Colocalisation and Density map: 2 colors, 'No Outliers', colocalisation map + density map
-Plot4=0; % Colocalistion with Threshold: 2 colors 'No Outliers' threshold with colocalisation>0.4(ColoThres)
+Plot1=1; % Raw data 3 Colors
+Plot2=1; % 3 colors Removed outliers Data (DataNoOutliers)
+Plot3=0; % Colocalisation and Density map: 3 colors, 'No Outliers', colocalisation map + density map
+Plot4=0; % Colocalistion with Threshold: 3 colors 'No Outliers' threshold with colocalisation>0.4(ColoThres)
          %
 Plot5=1; % 1 colors , 'Outliers' colocalisation map + density map independant for each color
 
 %%
 
-Result = struct('Correlation_Coloc1_vs_Density1', [], 'Correlation_Coloc2_vs_Density2', [], ...
-                'Percent_Ch1_ColocAbove04', [], 'Percent_Ch2_ColocAbove04', [], ...
+Result = struct('Correlation_Coloc1_vs_Density1', [], 'Correlation_Coloc2_vs_Density2', [], 'Correlation_Coloc3_vs_Density3', [], ...
+                'Percent_Ch1_ColocAbove04', [], 'Percent_Ch2_ColocAbove04', [], 'Percent_Ch3_ColocAbove04', [], ...
                 'AvNorm_DensityAbove04', [], 'AvRela_DensityAbove04', [], ...
                 'AvNorm_DensityBelow04', [], 'AvRela_DensityBelow04', [], ...
                 'Correlation_ColocVsDensity', [], ...
@@ -32,7 +32,10 @@ Result = struct('Correlation_Coloc1_vs_Density1', [], 'Correlation_Coloc2_vs_Den
                 'Av_DensityBelow04_Ch1', [], 'Av_Rela_DensityBelow04_Ch1', [], 'AvNorm_DensityBelow04_Ch1', [], ...
                 'Av_Rela_Density_Ch2', [], 'AvNorm_Density_Ch2', [], ...
                 'Av_DensityAbove04_Ch2', [], 'Av_Rela_DensityAbove04_Ch2', [], 'AvNorm_DensityAbove04_Ch2', [], ...
-                'Av_DensityBelow04_Ch2', [], 'Av_Rela_DensityBelow04_Ch2', [], 'AvNorm_DensityBelow04_Ch2', []);
+                'Av_DensityBelow04_Ch2', [], 'Av_Rela_DensityBelow04_Ch2', [], 'AvNorm_DensityBelow04_Ch2', [], ...
+                'Av_Rela_Density_Ch3', [], 'AvNorm_Density_Ch3', [], ...
+                'Av_DensityAbove04_Ch3', [], 'Av_Rela_DensityAbove04_Ch3', [], 'AvNorm_DensityAbove04_Ch3', [], ...
+                'Av_DensityBelow04_Ch3', [], 'Av_Rela_DensityBelow04_Ch3', [], 'AvNorm_DensityBelow04_Ch3', []);
 
         
         for cell = 1:size(CellData, 1)
@@ -48,11 +51,11 @@ Result = struct('Correlation_Coloc1_vs_Density1', [], 'Correlation_Coloc2_vs_Den
                 
                 DataRaw = CellData{cell}(whichPointsInROI, :); % Data in this ROI in this Cell 
 
-                Data_DoC1 = DataRaw(DataRaw(:, NDatacolumns + 7) == 1, :); % Data in this ROI in this Cell with Lr_r value above threshold
+                Data_DoC1 = DataRaw(DataRaw(:, NDatacolumns + 8) == 1, :); % Data in this ROI in this Cell with Lr_r value above threshold
 %%      
                 if ~isempty(Data_DoC1)
 
-                GenericName=strcat('Table_',num2str(cell),'_Region_',num2str(reg)); %t    
+                GenericName=strcat('Table_',num2str(cell),'_Region_',num2str(reg),'_Pair_',num2str(DoCIndex),'_'); %t    
                 % test Not a number value in column 5 6 and 12 (x y channel)
                 
 %                 TF=ismissing(Data_DoC1(:,:));
@@ -67,10 +70,12 @@ Result = struct('Correlation_Coloc1_vs_Density1', [], 'Correlation_Coloc2_vs_Den
                 y1 = Data_DoC1(Data_DoC1(:,12) == 1, 6); %  data from channel 2
                 x2 = Data_DoC1(Data_DoC1(:,12) == 2, 5);
                 y2 = Data_DoC1(Data_DoC1(:,12) == 2, 6);
+                x3 = Data_DoC1(Data_DoC1(:,12) == 3, 5);
+                y3 = Data_DoC1(Data_DoC1(:,12) == 3, 6);
 
 %                 D1_D2 = Data_DoC1.D1_D2; % Local Absolute Density per Channel
 
-                % Plotting Raw Data 2 colors
+                % Plotting Raw Data 3 colors
                 if Plot1==1
 
                 figure; hold on
@@ -79,6 +84,9 @@ Result = struct('Correlation_Coloc1_vs_Density1', [], 'Correlation_Coloc2_vs_Den
 
                 plot( DataRaw(DataRaw(:,12) == 2, 5), DataRaw(DataRaw(:,12) == 2, 6),'Marker'...
                                           ,'.','MarkerSize',4,'LineStyle','none','color','red');
+                                      
+                plot( DataRaw(DataRaw(:,12) == 3, 5), DataRaw(DataRaw(:,12) == 3, 6),'Marker'...
+                                          ,'.','MarkerSize',4,'LineStyle','none','color','yellow');
 
 %                 axis equal
                 axis tight
@@ -92,13 +100,14 @@ Result = struct('Correlation_Coloc1_vs_Density1', [], 'Correlation_Coloc2_vs_Den
                 
                 end
 
-                % Plotting Remove outliers Data 2colors 
+                % Plotting Remove outliers Data 3colors 
 
                 if Plot2 == 1
                     figure;  hold on 
                     plot( DataRaw(:,5), DataRaw(:,6),'Marker','.','MarkerSize',4,'LineStyle','none','color','black');
                     plot( x1, y1,'Marker','.','MarkerSize',4,'LineStyle','none','color','green');
                     plot( x2, y2,'Marker','.','MarkerSize',4,'LineStyle','none','color','red');
+                    plot( x3, y3,'Marker','.','MarkerSize',4,'LineStyle','none','color','yellow');
                     axis equal
                     axis tight
                     ax = gca;
@@ -192,18 +201,25 @@ Result = struct('Correlation_Coloc1_vs_Density1', [], 'Correlation_Coloc2_vs_Den
                 %% 1 colors density map, 'Outliers' independant for each color
                 
                 % Channel Ch1
-                D1 = Data_DoC1(Data_DoC1(:,12) == 1, NDatacolumns + 6);
-                DoC1 = Data_DoC1(Data_DoC1(:,12) == 1, NDatacolumns + 4);
+                D1 = Data_DoC1(Data_DoC1(:,12) == 1, NDatacolumns + 7);
+                DoC1 = Data_DoC1(Data_DoC1(:,12) == 1, NDatacolumns + 4 + DoCIndex);
                 D1_Norm = D1/max(D1);
                 
                 Result.Correlation_Coloc1_vs_Density1 = corr(D1, DoC1, 'Type', 'Spearman');
                 
                 % Channel Ch2                
-                D2 = Data_DoC1(Data_DoC1(:,12) == 2, NDatacolumns + 6);
-                DoC2 = Data_DoC1(Data_DoC1(:,12) == 2, NDatacolumns + 4);
+                D2 = Data_DoC1(Data_DoC1(:,12) == 2, NDatacolumns + 7);
+                DoC2 = Data_DoC1(Data_DoC1(:,12) == 2, NDatacolumns + 4 + DoCIndex);
                 D2_Norm = D2/max(D2);
                 
                 Result.Correlation_Coloc2_vs_Density2 = corr(D2, DoC2, 'Type', 'Spearman');
+                
+                % Channel Ch3              
+                D3 = Data_DoC1(Data_DoC1(:,12) == 3, NDatacolumns + 7);
+                DoC3 = Data_DoC1(Data_DoC1(:,12) == 3, NDatacolumns + 4 + DoCIndex);
+                D3_Norm = D3/max(D3);
+                
+                Result.Correlation_Coloc3_vs_Density3 = corr(D3, DoC3, 'Type', 'Spearman');
                                 
 %%                                                
                 if Plot5==1
@@ -241,6 +257,21 @@ Result = struct('Correlation_Coloc1_vs_Density1', [], 'Correlation_Coloc2_vs_Den
                     close gcf
                     
                     figure
+                    scatter( x3, y3,2,D3_Norm); 
+                    axis equal
+                    axis tight 
+                    xlim(Xlimit);
+                    ylim(Ylimit);
+                    colorbar
+                    caxis([0,1])
+                    set(gca, 'box','on','XTickLabel',[],'XTick',[],'YTickLabel',[],'YTick',[])
+                    set(gcf,'Color',[1 1 1])
+                    tt = getframe(gcf);
+                    imwrite(tt.cdata, fullfile(Path_name, f1, 'Density and DoC maps', sprintf('%sDensity_Ch%d.tif', GenericName, 3)));
+                    %saveas(gcf,strcat('Plot6\',GenericName ,'Plot6',strcat('_Ch',num2str(i))), 'tif');
+                    close gcf
+                    
+                    figure
                     scatter( x1, y1,2,DoC1); 
                     axis equal
                     axis tight 
@@ -269,6 +300,21 @@ Result = struct('Correlation_Coloc1_vs_Density1', [], 'Correlation_Coloc2_vs_Den
                     imwrite(tt.cdata, fullfile(Path_name, f1, 'Density and DoC maps', sprintf('%sDoC_Ch%d.tif', GenericName, 2)));
                     %saveas(gcf,strcat('Plot6\',GenericName ,'Plot6',strcat('_Ch',num2str(i))), 'tif');
                     close gcf
+                    
+                    figure
+                    scatter( x3, y3,2,DoC3); 
+                    axis equal
+                    axis tight 
+                    xlim(Xlimit);
+                    ylim(Ylimit);
+                    colorbar
+                    caxis([-1,1])
+                    set(gca, 'box','on','XTickLabel',[],'XTick',[],'YTickLabel',[],'YTick',[])
+                    set(gcf,'Color',[1 1 1])
+                    tt = getframe(gcf);
+                    imwrite(tt.cdata, fullfile(Path_name, f1, 'Density and DoC maps', sprintf('%sDoC_Ch%d.tif', GenericName, 3)));
+                    %saveas(gcf,strcat('Plot6\',GenericName ,'Plot6',strcat('_Ch',num2str(i))), 'tif');
+                    close gcf
                 end
 
                 %% Result Part
@@ -283,8 +329,9 @@ Result = struct('Correlation_Coloc1_vs_Density1', [], 'Correlation_Coloc2_vs_Den
 %                 whos Data_DoC1
 %                 whos ColoThres
                                 
-                Result.Percent_Ch1_ColocAbove04 = sum((Data_DoC1(:,NDatacolumns+4) >= ColoThres) & (Data_DoC1(:,12) == 1)) / sum((Data_DoC1(:,12) == 1)); % 
-                Result.Percent_Ch2_ColocAbove04 = sum((Data_DoC1(:,NDatacolumns+4) >= ColoThres) & (Data_DoC1(:,12) == 2)) / sum((Data_DoC1(:,12) == 2)); % ;  %
+                Result.Percent_Ch1_ColocAbove04 = sum((Data_DoC1(:,NDatacolumns+4+DoCIndex) >= ColoThres) & (Data_DoC1(:,12) == 1)) / sum((Data_DoC1(:,12) == 1)); % 
+                Result.Percent_Ch2_ColocAbove04 = sum((Data_DoC1(:,NDatacolumns+4+DoCIndex) >= ColoThres) & (Data_DoC1(:,12) == 2)) / sum((Data_DoC1(:,12) == 2)); % ;  %
+                Result.Percent_Ch3_ColocAbove04 = sum((Data_DoC1(:,NDatacolumns+4+DoCIndex) >= ColoThres) & (Data_DoC1(:,12) == 3)) / sum((Data_DoC1(:,12) == 3)); %
 
                 
 %                 disp('line283');
@@ -309,12 +356,12 @@ Result = struct('Correlation_Coloc1_vs_Density1', [], 'Correlation_Coloc2_vs_Den
                 
                 NormdDensity = Data_DoC1(:, 8)/max(Data_DoC1(:,8));
                 
-                Result.AvNorm_DensityAbove04 = mean(NormdDensity(Data_DoC1(:, NDatacolumns + 4) >= ColoThres));
-                Result.AvRela_DensityAbove04 = mean(Data_DoC1((Data_DoC1(:,NDatacolumns + 4) >= ColoThres), NDatacolumns + 8)/DensityROI{reg,cell}(1));
-                Result.AvNorm_DensityBelow04 = mean(NormdDensity(Data_DoC1(:, NDatacolumns + 4) < ColoThres));
-                Result.AvRela_DensityBelow04 = mean(Data_DoC1((Data_DoC1(:,NDatacolumns + 4) < ColoThres), NDatacolumns + 8)/DensityROI{reg,cell}(1));
+                Result.AvNorm_DensityAbove04 = mean(NormdDensity(Data_DoC1(:, NDatacolumns + 4 + DoCIndex) >= ColoThres));
+                Result.AvRela_DensityAbove04 = mean(Data_DoC1((Data_DoC1(:,NDatacolumns + 4 + DoCIndex) >= ColoThres), NDatacolumns + 8)/DensityROI{reg,cell}(1));
+                Result.AvNorm_DensityBelow04 = mean(NormdDensity(Data_DoC1(:, NDatacolumns + 4 + DoCIndex) < ColoThres));
+                Result.AvRela_DensityBelow04 = mean(Data_DoC1((Data_DoC1(:,NDatacolumns + 4 + DoCIndex) < ColoThres), NDatacolumns + 8)/DensityROI{reg,cell}(1));
 
-                Result.Correlation_ColocVsDensity = corr(Data_DoC1(:, NDatacolumns + 8), Data_DoC1(:, NDatacolumns + 4), 'Type', 'Spearman');
+                Result.Correlation_ColocVsDensity = corr(Data_DoC1(:, NDatacolumns + 9), Data_DoC1(:, NDatacolumns + 4 + DoCIndex), 'Type', 'Spearman');
                 
                 % Lr Above threshold channel 1
                 
@@ -372,10 +419,31 @@ Result = struct('Correlation_Coloc1_vs_Density1', [], 'Correlation_Coloc2_vs_Den
                 Result.Av_Rela_DensityBelow04_Ch2 = mean(D2_below_04 / DensityROI{reg,cell}(3));
                 Result.AvNorm_DensityBelow04_Ch2 = mean(D2_below_04 / max(D2));
                 
+                
+                % Channel 3
+                Result.Av_Rela_Density_Ch3 = mean(D3 / DensityROI{reg,cell}(3));
+                Result.AvNorm_Density_Ch3 = mean(D3_Norm);
+                
+                % Above threshold
+                D3_above_04 = Data_DoC1((Data_DoC1(:,12) == 3) & (Data_DoC1(:,NDatacolumns + 4 + DoCIndex) >= ColoThres), NDatacolumns + 7);
+                
+                Result.Av_DensityAbove04_Ch3 = mean(D3_above_04);
+                Result.Av_Rela_DensityAbove04_Ch3 = mean(D3_above_04 / DensityROI{reg,cell}(3));
+                Result.AvNorm_DensityAbove04_Ch3 = mean(D3_above_04 / max(D3));
+                
+                % Below Threshold
+                D3_below_04 = Data_DoC1((Data_DoC1(:,12) == 3) & (Data_DoC1(:,NDatacolumns + 4 + DoCIndex) < ColoThres), NDatacolumns + 7);
+                
+                Result.Av_DensityBelow04_Ch3 = mean(D3_below_04);
+                Result.Av_Rela_DensityBelow04_Ch3 = mean(D3_below_04 / DensityROI{reg,cell}(3));
+                Result.AvNorm_DensityBelow04_Ch3 = mean(D3_below_04 / max(D3));
+                
+                
+                
 
-                ResultTable{reg,cell} = Result;
+                ResultTable{reg,cell,DoCIndex + 1} = Result;
                 else
-                    ResultTable{reg,cell} = [];
+                    ResultTable{reg,cell,DoCIndex + 1} = [];
                 
                 end
             
@@ -397,6 +465,7 @@ ResultTable = A;
     % Percent Colocalisaton above threshold
     Percent_Ch1_ColocAbove04 = arrayfun(@(x) x{:}.Percent_Ch1_ColocAbove04, ResultTable);
     Percent_Ch2_ColocAbove04 = arrayfun(@(x) x{:}.Percent_Ch2_ColocAbove04, ResultTable);
+    Percent_Ch3_ColocAbove04 = arrayfun(@(x) x{:}.Percent_Ch3_ColocAbove04, ResultTable);
     
     % Density above threshold
 %     AvNorm_DensityAbove04=arrayfun(@(x) x{:}.AvNorm_DensityAbove04,ResultTable);
@@ -411,19 +480,21 @@ ResultTable = A;
 %    PercentLrAbove05_Ch2=arrayfun(@(x) x{:}.PercentLrAbove05_Ch2,ResultTable)
     
     Array1 = [{'Percentage of colocalised Ch1 molecules'}, ...
-        {'Percentage of colocalised Ch2 molecules'}]; %, ...
+        {'Percentage of colocalised Ch2 molecules'}, ...
+        {'Percentage of colocalised Ch3 molecules'}]; %, ...
 %         {'AvNormDensity>0.4'},	{'AvNormDensity<0.4'},...
 %         {'AvRelaDensity>0.4'}, {'AvRelaDensity<0.4'}, {'Correlation DC vs Density'}];
     
     Matrix_Result1 = [Percent_Ch1_ColocAbove04...
-                    Percent_Ch2_ColocAbove04]; %...
+                    Percent_Ch2_ColocAbove04...
+                    Percent_Ch3_ColocAbove04]; %...
 %                     AvNorm_DensityAbove04...
 %                     AvNorm_DensityBelow04...
 %                     AvRela_DensityAbove04... 
 %                     AvRela_DensityBelow04...
 %                     Correlation_ColocVsDensity];% PercentLrAbove05_Ch1 PercentLrAbove05_Ch2];
      
-    RegionName1 = strcat('DoC Results'); % name of the sheet
+    RegionName1 = strcat('DoC Results ', num2str(DoCIndex + 1)); % name of the sheet
     xlswrite(fullfile(Path_name, 'DoC Results'), Array1, RegionName1, 'A1'); %'Regiion' = name of the filename xcel shee, Array1 = data to put in the spreadsheet, 'A1' where to start
     xlswrite(fullfile(Path_name, 'DoC Results'), Matrix_Result1, RegionName1, 'A2');
     

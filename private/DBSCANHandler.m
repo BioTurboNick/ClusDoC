@@ -79,9 +79,10 @@ try
             
             printOutFigDest = 'DBSCAN Results';
             
-            if nargin == 10
+            if nargin == 11
                 Density = varargin{7}; % Data is an input
-                DoCScore = varargin{8};
+                DoCScore1 = varargin{8};
+                DoCScore2 = varargin{9};
                 printOutFigDest = 'Clus-DoC Results\DBSCAN Results';
             end
 
@@ -186,7 +187,7 @@ try
 
                 if display1 || ~printOutFig
                     plot(ax1,xin(:,1), xin(:,2),'Marker', '.', 'MarkerSize', 5,'LineStyle', 'none', 'color', clusterColor);
-                end   
+                end
 
                 [dataT, idxT, DisT, Density20 ] = Lr_fun(xin(:,1), xin(:,2), xin(:,1), xin(:,2) , 20, SizeROI); % Included in FunDBSCAN4DoC_GUIV2
                                                                                                                     % Unsure how this is carried forward
@@ -224,48 +225,85 @@ try
 
                 end
 
-                if nargin == 10 % DoC analysis.  Vector of DoC scores for each point is an input.
+                if nargin == 11 % DoC analysis.  Vector of DoC scores for each point is an input.
 
                     ClusterSmooth{i,1}.Density = Density(class == i);%
-                    ClusterSmooth{i,1}.MeanDoC = mean(DoCScore(class == i));
+                    ClusterSmooth{i,1}.MeanDoC1 = mean(DoCScore1(class == i));
+                    ClusterSmooth{i,1}.MeanDoC2 = mean(DoCScore2(class == i));
 
-                    Point_In = xin(DoCScore(class == i) >= DBSCANParams.DoCThreshold, 1:2);
-                    Nb_In = size(Point_In,1);
+                    Point_In1 = xin(DoCScore1(class == i) >= DBSCANParams.DoCThreshold, 1:2);
+                    Point_In2 = xin(DoCScore2(class == i) >= DBSCANParams.DoCThreshold, 1:2);
+                    Nb_In1 = size(Point_In1,1);
+                    Nb_In2 = size(Point_In2,1);
 
-                    if Nb_In > 1
-                        Density20_In = Density20(DoCScore(class == i) >= DBSCANParams.DoCThreshold);
+                    if Nb_In1 > 1
+                        Density20_In1 = Density20(DoCScore1(class == i) >= DBSCANParams.DoCThreshold);
     %                     [Contour_In] = Smoothing_fun4clusterV3_3(Point_In, 0,0);
 
-                        [~,  ~, ~, ~, Contour_In, ~, ~] = Smoothing_fun4cluster(Point_In, DBSCANParams, 0, 0);
+                        [~,  ~, ~, ~, Contour_In1, ~, ~] = Smoothing_fun4cluster(Point_In1, DBSCANParams, 0, 0);
 
-                        Area_In = polyarea(Contour_In(:,1),Contour_In(:,2));
+                        Area_In1 = polyarea(Contour_In1(:,1),Contour_In1(:,2));
 
 
-                        ClusterSmooth{i,1}.Nb_In = Nb_In;
-                        ClusterSmooth{i,1}.Area_In = Area_In;
-                        ClusterSmooth{i,1}.AvRelativeDensity20_In = mean(Density20_In/AvDensity);
+                        ClusterSmooth{i,1}.Nb_In1 = Nb_In1;
+                        ClusterSmooth{i,1}.Area_In1 = Area_In1;
+                        ClusterSmooth{i,1}.AvRelativeDensity20_In1 = mean(Density20_In1/AvDensity);
 
     %                     plot(ax1,Contour_In(:,1),Contour_In(:,2),'r');
 
     %                     DoCOut = Data_DoCi(Data_DoCi.DoC<0.4,:);
-                        Density20_Out = Density20(DoCScore(class == i) >= DBSCANParams.DoCThreshold);
+                        Density20_Out1 = Density20(DoCScore1(class == i) >= DBSCANParams.DoCThreshold);
 
-                        Nb_Out = length(Density20_Out);
-                        ClusterSmooth{i,1}.Nb_Out = Nb_Out;
-                        ClusterSmooth{i,1}.AvRelativeDensity20_Out = mean(Density20_Out/AvDensity);
+                        Nb_Out1 = length(Density20_Out1);
+                        ClusterSmooth{i,1}.Nb_Out1 = Nb_Out1;
+                        ClusterSmooth{i,1}.AvRelativeDensity20_Out1 = mean(Density20_Out1/AvDensity);
 
-                        ClusterSmooth{i,1}.DensityRatio = mean(Density20_In/AvDensity)/mean(Density20_Out/AvDensity);
-                        ClusterSmooth{i,1}.Contour_In = Contour_In;
+                        ClusterSmooth{i,1}.DensityRatio1 = mean(Density20_In1/AvDensity)/mean(Density20_Out1/AvDensity);
+                        ClusterSmooth{i,1}.Contour_In1 = Contour_In1;
 
                         else
-                            ClusterSmooth{i,1}.Nb_In = Nb_In;
-                            ClusterSmooth{i,1}.Area_In = 0;
-                            ClusterSmooth{i,1}.AvRelativeDensity20_In = 0;
+                            ClusterSmooth{i,1}.Nb_In1 = Nb_In1;
+                            ClusterSmooth{i,1}.Area_In1 = 0;
+                            ClusterSmooth{i,1}.AvRelativeDensity20_In1 = 0;
 
-                            ClusterSmooth{i,1}.DensityRatio =0;
-                            ClusterSmooth{i,1}.Contour_In = 0; 
+                            ClusterSmooth{i,1}.DensityRatio1 =0;
+                            ClusterSmooth{i,1}.Contour_In1 = 0; 
                     end
 
+                    
+                    if Nb_In2 > 1
+                        Density20_In2 = Density20(DoCScore2(class == i) >= DBSCANParams.DoCThreshold);
+    %                     [Contour_In] = Smoothing_fun4clusterV3_3(Point_In, 0,0);
+
+                        [~,  ~, ~, ~, Contour_In2, ~, ~] = Smoothing_fun4cluster(Point_In2, DBSCANParams, 0, 0);
+
+                        Area_In2 = polyarea(Contour_In2(:,1),Contour_In2(:,2));
+
+
+                        ClusterSmooth{i,1}.Nb_In2 = Nb_In2;
+                        ClusterSmooth{i,1}.Area_In2 = Area_In2;
+                        ClusterSmooth{i,1}.AvRelativeDensity20_In2 = mean(Density20_In2/AvDensity);
+
+    %                     plot(ax1,Contour_In(:,1),Contour_In(:,2),'r');
+
+    %                     DoCOut = Data_DoCi(Data_DoCi.DoC<0.4,:);
+                        Density20_Out2 = Density20(DoCScore2(class == i) >= DBSCANParams.DoCThreshold);
+
+                        Nb_Out2 = length(Density20_Out2);
+                        ClusterSmooth{i,1}.Nb_Out2 = Nb_Out2;
+                        ClusterSmooth{i,1}.AvRelativeDensity20_Out2 = mean(Density20_Out2/AvDensity);
+
+                        ClusterSmooth{i,1}.DensityRatio2 = mean(Density20_In2/AvDensity)/mean(Density20_Out2/AvDensity);
+                        ClusterSmooth{i,1}.Contour_In2 = Contour_In2;
+
+                        else
+                            ClusterSmooth{i,1}.Nb_In2 = Nb_In2;
+                            ClusterSmooth{i,1}.Area_In2 = 0;
+                            ClusterSmooth{i,1}.AvRelativeDensity20_In2 = 0;
+
+                            ClusterSmooth{i,1}.DensityRatio2 =0;
+                            ClusterSmooth{i,1}.Contour_In2 = 0; 
+                    end
 
                 end
 

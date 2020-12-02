@@ -1,4 +1,4 @@
-function [ClusterSmoothTableCh1, ClusterSmoothTableCh2, clusterIDOut, clusterTable] = DBSCANonDoCResults(CellData, ROICoordinates, Path_name, Chan1Color, Chan2Color, dbscanParamsPassed, NDatacolumns, clusterTable)
+function [ClusterSmoothTableCh1, ClusterSmoothTableCh2, ClusterSmoothTableCh3, clusterIDOut, clusterTable] = DBSCANonDoCResults(CellData, ROICoordinates, Path_name, Chan1Color, Chan2Color, Chan3Color, dbscanParamsPassed, NDatacolumns, clusterTable)
 % Routine to apply DBSCAN on the Degree of Colocalisation Result for
 
 
@@ -16,6 +16,7 @@ function [ClusterSmoothTableCh1, ClusterSmoothTableCh2, clusterIDOut, clusterTab
 
 ClusterSmoothTableCh1 = cell(max(cellfun(@length, ROICoordinates)), length(CellData));
 ClusterSmoothTableCh2 = cell(max(cellfun(@length, ROICoordinates)), length(CellData));
+ClusterSmoothTableCh3 = cell(max(cellfun(@length, ROICoordinates)), length(CellData));
 
 ResultCell = cell(max(cellfun(@length, ROICoordinates)), length(CellData)); % it looks like this is initialize to the max number of ROIs? which means empty end ones are used, which need to be differentiated from skipped ROIs
 
@@ -23,7 +24,7 @@ clusterIDOut = cell(max(cellfun(@length, ROICoordinates)), length(CellData), 2);
 
 clusterTable = [];
 
-    for Ch = 1:2
+    for Ch = 1:3
 
         cellROIPair = [];
 
@@ -62,6 +63,8 @@ clusterTable = [];
                         clusterColor = Chan1Color;
                     elseif Ch == 2
                         clusterColor = Chan2Color;
+                    elseif Ch == 3
+                        clusterColor = Chan3Color;
                     end
 
 
@@ -73,8 +76,8 @@ clusterTable = [];
                     % DBSCANParams, cellNum, ROINum, display1, display2, clusterColor, InOutMaskVector, Density, DoCScore)
                     
                     [~, ClusterCh, ~, classOut, ~, ~, ~, ResultCell{roiIter, cellIter}] = DBSCANHandler(Data_DoC1(:,5:6), ...
-                        dbscanParams, cellIter, roiIter, true, false, clusterColor, Data_DoC1(:, NDatacolumns + 2), Data_DoC1(:, NDatacolumns + 6), ...
-                        Data_DoC1(:, NDatacolumns + 4));
+                        dbscanParams, cellIter, roiIter, true, false, clusterColor, Data_DoC1(:, NDatacolumns + 2), Data_DoC1(:, NDatacolumns + 7), ...
+                        Data_DoC1(:, NDatacolumns + 4), Data_DoC1(:, NDatacolumns + 5));
 
                     roi = ROICoordinates{cellIter}{roiIter};
                     cellROIPair = [cellROIPair; cellIter, roiIter, roi(1,1), roi(1,2), polyarea(roi(:,1), roi(:,2))];
@@ -113,6 +116,10 @@ clusterTable = [];
                         case 2
 
                             ClusterSmoothTableCh2{roiIter,cellIter} = ClusterCh;
+                            
+                        case 3
+
+                            ClusterSmoothTableCh3{roiIter,cellIter} = ClusterCh;
                     end
 
                     %                         Name1 = sprintf('_Table_%d_Region_%d_', p, q);
@@ -141,7 +148,7 @@ clusterTable = [];
     end % channel
 
 
-save(fullfile(Path_name, 'DBSCAN Clus-DoC Results.mat'),'ClusterSmoothTableCh1','ClusterSmoothTableCh2');
+save(fullfile(Path_name, 'DBSCAN Clus-DoC Results.mat'),'ClusterSmoothTableCh1','ClusterSmoothTableCh2','ClusterSmoothTableCh3');
 end
 
 function clusterTableOut = AppendToClusterTableInternal(clusterTable, Ch, cellIter, roiIter, ClusterCh, classOut)
@@ -162,7 +169,7 @@ function clusterTableOut = AppendToClusterTableInternal(clusterTable, Ch, cellIt
         end
 
         % Add new data to the clusterTable
-        appendTable = zeros(length(ClusterCh), 15);
+        appendTable = zeros(length(ClusterCh), 17);
         appendTable(:, 1) = cellIter; % CurrentROI
         appendTable(:, 2) = roiIter; % CurrentROI
         appendTable(:, 3) = Ch; % Channel
@@ -171,18 +178,20 @@ function clusterTableOut = AppendToClusterTableInternal(clusterTable, Ch, cellIt
         appendTable(:, 5) = cell2mat(cellfun(@(x) size(x.Points, 1), ClusterCh, 'uniformoutput', false)); % NPoints
         appendTable(:, 6) = cellfun(@(x) x.Nb, ClusterCh); % Nb
 
-        if size(ClusterCh, 1) > 0 && isfield(ClusterCh{1}, 'MeanDoC')
-            appendTable(:, 7) = cellfun(@(x) x.MeanDoC, ClusterCh); % MeanDoCScore
+        if isfield(ClusterCh{1}, 'MeanDoC1')
+            appendTable(:, 7) = cellfun(@(x) x.MeanDoC1, ClusterCh); % MeanDoCScore
+            appendTable(:, 8) = cellfun(@(x) x.MeanDoC2, ClusterCh); % MeanDoCScore
         end
 
-        appendTable(:, 8) = cellfun(@(x) x.Area, ClusterCh); % Area
-        appendTable(:, 9) = cellfun(@(x) x.Circularity, ClusterCh); % Circularity
-        appendTable(:, 10) = cellfun(@(x) x.TotalAreaDensity, ClusterCh); % TotalAreaDensity
-        appendTable(:, 11) = cellfun(@(x) x.AvRelativeDensity, ClusterCh); % AvRelativeDensity
-        appendTable(:, 12) = cellfun(@(x) x.Mean_Density, ClusterCh); % MeanDensity
-        appendTable(:, 13) = cellfun(@(x) x.Nb_In, ClusterCh); % Nb_In
-        appendTable(:, 14) = cellfun(@(x) x.NInsideMask, ClusterCh); % NPointsInsideMask
-        appendTable(:, 15) = cellfun(@(x) x.NOutsideMask, ClusterCh); % NPointsInsideMask
+        appendTable(:, 9) = cellfun(@(x) x.Area, ClusterCh); % Area
+        appendTable(:, 10) = cellfun(@(x) x.Circularity, ClusterCh); % Circularity
+        appendTable(:, 11) = cellfun(@(x) x.TotalAreaDensity, ClusterCh); % TotalAreaDensity
+        appendTable(:, 12) = cellfun(@(x) x.AvRelativeDensity, ClusterCh); % AvRelativeDensity
+        appendTable(:, 13) = cellfun(@(x) x.Mean_Density, ClusterCh); % MeanDensity
+        appendTable(:, 14) = cellfun(@(x) x.Nb_In1, ClusterCh); % Nb_In
+        appendTable(:, 15) = cellfun(@(x) x.Nb_In2, ClusterCh); % Nb_In
+        appendTable(:, 16) = cellfun(@(x) x.NInsideMask, ClusterCh); % NPointsInsideMask
+        appendTable(:, 17) = cellfun(@(x) x.NOutsideMask, ClusterCh); % NPointsInsideMask
 
         clusterTableOut = [clusterTable; appendTable];
     

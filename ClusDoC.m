@@ -344,6 +344,7 @@ function initializeParameters(varargin)
     % Initialize some global settings
     handles.Chan1Color = [46, 204, 113]/255; % Flat UI Emerald
     handles.Chan2Color = [231, 76, 60]/255; % Flat UI Alizarin
+    handles.Chan3Color = [241, 196, 15]/255; %  Flat UI Sun Flower
     handles.UnselectedROIColor = [142, 68, 173]/255; % Flat UI Peter River
     handles.ROIColor = [40, 142, 230]/255; % Flat UI Amethyst
     
@@ -354,7 +355,7 @@ function initializeParameters(varargin)
     handles.RipleyK.MaxSampledPts = 1e4;
     
     % Default DBSCAN parameters
-    for k = 1:2
+    for k = 1:3
         handles.DBSCAN(k).epsilon = 20;
         handles.DBSCAN(k).minPts = 3;
         handles.DBSCAN(k).UseLr_rThresh = true;
@@ -447,7 +448,7 @@ function FunPlot(whichCell)
         handles.handles.dSTORM_plot = plot(handles.handles.ax_h, handles.CellData{whichCell}(:,5), handles.CellData{whichCell}(:,6), ...
             'Marker','.','MarkerSize',3,'LineStyle','none',...
             'color','red', 'Tag', 'dSTORM_plot');
-    else
+    elseif numel(unique(handles.CellData{whichCell}(:,12))) == 2
         handles.handles.dSTORM_plot = plot(handles.handles.ax_h, handles.CellData{whichCell}(handles.CellData{whichCell}(:, 12) == 1, 5), ...
             handles.CellData{whichCell}(handles.CellData{whichCell}(:, 12) == 1, 6),...
             'Marker','.','MarkerSize',3,'LineStyle', 'none', 'color', handles.Chan1Color, 'Tag', 'dSTORM_plot');
@@ -455,6 +456,18 @@ function FunPlot(whichCell)
         handles.handles.dSTORM_plot = plot(handles.handles.ax_h, handles.CellData{whichCell}(handles.CellData{whichCell}(:, 12) == 2, 5), ...
             handles.CellData{whichCell}(handles.CellData{whichCell}(:, 12) == 2, 6), ...
             'Marker','.','MarkerSize',3,'LineStyle','none','color', handles.Chan2Color, 'Tag', 'dSTORM_plot');
+        set(handles.handles.ax_h, 'NextPlot', 'replace');
+    elseif numel(unique(handles.CellData{whichCell}(:,12))) == 3
+        handles.handles.dSTORM_plot = plot(handles.handles.ax_h, handles.CellData{whichCell}(handles.CellData{whichCell}(:, 12) == 1, 5), ...
+            handles.CellData{whichCell}(handles.CellData{whichCell}(:, 12) == 1, 6),...
+            'Marker','.','MarkerSize',3,'LineStyle', 'none', 'color', handles.Chan1Color, 'Tag', 'dSTORM_plot');
+        set(handles.handles.ax_h, 'NextPlot', 'add');
+        handles.handles.dSTORM_plot = plot(handles.handles.ax_h, handles.CellData{whichCell}(handles.CellData{whichCell}(:, 12) == 2, 5), ...
+            handles.CellData{whichCell}(handles.CellData{whichCell}(:, 12) == 2, 6), ...
+            'Marker','.','MarkerSize',3,'LineStyle','none','color', handles.Chan2Color, 'Tag', 'dSTORM_plot');
+        handles.handles.dSTORM_plot = plot(handles.handles.ax_h, handles.CellData{whichCell}(handles.CellData{whichCell}(:, 12) == 3, 5), ...
+            handles.CellData{whichCell}(handles.CellData{whichCell}(:, 12) == 3, 6), ...
+            'Marker','.','MarkerSize',3,'LineStyle','none','color', handles.Chan3Color, 'Tag', 'dSTORM_plot');
         set(handles.handles.ax_h, 'NextPlot', 'replace');
     end
     
@@ -677,17 +690,11 @@ function Load_Data(~,~,~)
             if goodZENFile
 
                 importData = Import1File(fullfile(pathName, fileName{k}));
-                
-                
                 handles.CellData{k} = [importData.Data zeros(size(importData.Data, 1), 8)];
-                
 %                 handles.CellData{k}(:,5:6) = handles.CellData{k}(:,5:6)*importData.Footer{2}(3)/importData.Footer{2}(1);
-
-
 %                 handles.CellData{k}(any(isnan(handles.CellData{k}), 2), :) = []; % protection against incomplete line writing in ZEN export
                                                                                  % This breaks import for ThunderSTORMConcatenator output 
                                                                                  % Commenting this out to allow that format to work.
-
                 handles.NDataColumns = size(importData.Data, 2);
                 handles.CellData{k}(:,handles.NDataColumns + 2) = 1; % All data is in mask until set otherwise
                 handles.ROIMultiplier = importData.Footer{2}(1); % Conversion from coordinates.txt positions to nm
@@ -707,7 +714,7 @@ function Load_Data(~,~,~)
                 handles.CellData{k}(any(handles.CellData{k}(:, 5:6) > handles.MaxSize), : )= [];
                 handles.CellData{k}(any(handles.CellData{k}(:, 5:6) < 0), : )= [];
                 
-                handles.Nchannels = min([numel(unique(handles.CellData{k}(:,12))), 2]); % cap import to 2 channels ever
+                handles.Nchannels = min([numel(unique(handles.CellData{k}(:,12))), 3]); % cap import to 3 channels ever
 
                 
             else
@@ -788,7 +795,7 @@ function Load_Data(~,~,~)
             handles.Outputfolder = fullfile(handles.Path_name, 'Extracted_Region');
             set(get(handles.handles.b_panel, 'children'), 'enable', 'on');
             set(handles.handles.alignMaskButton, 'enable', 'off');
-            if handles.Nchannels == 1
+            if handles.Nchannels < 3
                 set(handles.handles.hDoC_All1, 'enable', 'off');
             end
         else
@@ -1155,7 +1162,7 @@ function OutputEdit(varargin)
         set(get(handles.handles.b_panel, 'children'), 'enable', 'on');
         set(handles.handles.alignMaskButton, 'enable', 'off');
         set(handles.handles.ExportResultsButton, 'enable', 'off');
-        if handles.Nchannels == 1
+        if handles.Nchannels < 1
             set(handles.handles.hDoC_All1, 'enable', 'off');
         end
 
@@ -1592,13 +1599,13 @@ function returnValue = setDBSCANParameters(handles)
     function changeDBSCANChannel(varargin)
         
         changeToValue = (varargin{2}.NewValue);
-        
+        oldCh = ch;
         if strcmp(changeToValue.String, 'Ch 1');
             ch = 1;
-            oldCh = 2;
         elseif strcmp(changeToValue.String, 'Ch 2');
             ch = 2;
-            oldCh = 1;
+        elseif strcmp(changeToValue.String, 'Ch 3');
+            ch = 3;
         end
         
      	handles.DBSCAN(oldCh).epsilon = str2double(get(handles.handles.DBSCANSettingsEdit(1),'string'));
@@ -1741,23 +1748,34 @@ function returnValue = setDoCParameters(handles)
         'Style', 'radiobutton', 'String', 'Ch 1', 'position', [69 7 50 20]);
     
     handles.handles.DBSCANChannelSelect(2) = uicontrol(handles.handles.DBSCANChannelToggle, ...
-        'Style', 'radiobutton', 'String', 'Ch 2', 'position', [190 7 50 20]);
+        'Style', 'radiobutton', 'String', 'Ch 2', 'position', [130 7 50 20]);
+    
+    handles.handles.DBSCANChannelSelect(3) = uicontrol(handles.handles.DBSCANChannelToggle, ...
+        'Style', 'radiobutton', 'String', 'Ch 3', 'position', [190 7 50 20]);
     
     if verLessThan('matlab', '8.4')
         
-        if handles.Nchannels > 1
+        if handles.Nchannels > 2
             set(handles.handles.DBSCANChannelToggle, 'Visible', 'on');
+        elseif handles.Nchannels > 1
+            set(handles.handles.DBSCANChannelToggle, 'Visible', 'on');
+            set(handles.handles.DBSCANChannelSelect(2), 'Enable', 'off');
         else
             set(handles.handles.DBSCANChannelToggle, 'Visible', 'on');
             set(handles.handles.DBSCANChannelSelect(2), 'Enable', 'off');
+            set(handles.handles.DBSCANChannelSelect(3), 'Enable', 'off');
         end
         
     else
-        if handles.Nchannels > 1
+        if handles.Nchannels > 2
             handles.handles.DBSCANChannelToggle.Visible = 'on';
+        elseif handles.Nchannels > 1
+            handles.handles.DBSCANChannelToggle.Visible = 'on';
+            handles.handles.DBSCANChannelSelect(2).Enable = 'off';
         else
             handles.handles.DBSCANChannelToggle.Visible = 'on';
             handles.handles.DBSCANChannelSelect(2).Enable = 'off';
+            handles.handles.DBSCANChannelSelect(3).Enable = 'off';
         end
     end
         
@@ -1877,12 +1895,13 @@ function returnValue = setDoCParameters(handles)
         
         changeToValue = (varargin{2}.NewValue);
         
+        oldCh = ch;
         if strcmp(changeToValue.String, 'Ch 1');
             ch = 1;
-            oldCh = 2;
         elseif strcmp(changeToValue.String, 'Ch 2');
             ch = 2;
-            oldCh = 1;
+        elseif strcmp(changeToValue.String, 'Ch 3');
+            ch = 3;
         end
         
      	handles.DBSCAN(oldCh).epsilon = str2double(get(handles.handles.DBSCANSettingsEdit(1),'string'));
@@ -1968,6 +1987,9 @@ function RipleyKtest(~, ~, ~)
 
     xCh2 = handles.CellData{handles.CurrentCellData}(whichPointsInROI & ...
         (handles.CellData{handles.CurrentCellData}(:, handles.NDataColumns - 1) == 1), 5:6);
+    
+    xCh3 = handles.CellData{handles.CurrentCellData}(whichPointsInROI & ...
+        (handles.CellData{handles.CurrentCellData}(:, handles.NDataColumns - 1) == 1), 5:6);
 
     % RipleyK parameter
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2002,6 +2024,11 @@ function RipleyKtest(~, ~, ~)
             if size(xCh2, 1) > handles.RipleyK.MaxSampledPts
                 rKsubsample = randsample(1:size(xCh2, 1), handles.RipleyK.MaxSampledPts);
                 xCh2 = xCh2(rKsubsample, :);
+            end
+            
+            if size(xCh3, 1) > handles.RipleyK.MaxSampledPts
+                rKsubsample = randsample(1:size(xCh3, 1), handles.RipleyK.MaxSampledPts);
+                xCh3 = xCh3(rKsubsample, :);
             end
 
             %Ch1
@@ -2046,7 +2073,25 @@ function RipleyKtest(~, ~, ~)
                 xlabel(handles.handles.RipleyKCh2Ax, 'r (nm)', 'fontsize', 12);
                 ylabel(handles.handles.RipleyKCh2Ax, 'L(r)-r', 'fontsize', 12);
                 set(handles.handles.RipleyKCh2Ax, 'NextPlot', 'replace');
-
+            end
+            
+            if handles.Nchannels == 3
+                %Ch3
+                % RipleyK function
+                [handles.RipleyK.r(:,3), handles.RipleyK.Lr_r(:,3)] = RipleyKFun( xCh3, handles.RipleyK.Area, ...
+                handles.RipleyK.Start, handles.RipleyK.End, handles.RipleyK.Step, ...
+                handles.RipleyK.size_ROI);
+                % Plot
+                handles.handles.RipleyKCh3Fig = figure('Name','Active ROI Ch3', 'color', [1 1 1]); 
+                handles.handles.RipleyKCh3Ax = axes('parent', handles.handles.RipleyKCh3Fig, 'fontsize', 12);
+                plot(handles.handles.RipleyKCh3Ax, handles.RipleyK.r(:,3), handles.RipleyK.Lr_r(:,3), ...
+                     'linewidth', 2, 'color', handles.Chan3Color);
+                set(handles.handles.RipleyKCh3Ax, 'NextPlot', 'add', 'fontsize', 12);
+                title_name = sprintf('%.0d points in %.0f x %.0f nm Area', size(xCh3, 1), CurrentROI(3), CurrentROI(4));
+                title(title_name);
+                xlabel(handles.handles.RipleyKCh3Ax, 'r (nm)', 'fontsize', 12);
+                ylabel(handles.handles.RipleyKCh3Ax, 'L(r)-r', 'fontsize', 12);
+                set(handles.handles.RipleyKCh3Ax, 'NextPlot', 'replace');
             end
 
             set(handles.handles.MainFig, 'pointer', 'arrow');
@@ -2096,7 +2141,7 @@ function DBSCAN_Test(~, ~, ~)
     
     dataCropped = handles.CellData{handles.CurrentCellData}(whichPointsInROI, :);
     
-    for ch = 1:2
+    for ch = 1:3
         handles.DBSCAN(ch).UseLr_rThresh = false;
         handles.DBSCAN(ch).DoStats = false;
     end
@@ -2148,7 +2193,25 @@ function DBSCAN_Test(~, ~, ~)
                 set(figOut, 'Name', 'DBSCAN Active ROI Ch2')
                 
                 handles.ClusterTable = AppendToClusterTable(handles.ClusterTable, 2, handles.CurrentCellData, handles.CurrentROIData, ClusterCh, classOut);
+                
+            end
+            
+            if handles.Nchannels == 3
 
+                dbscanParams = handles.DBSCAN(3);
+                dbscanParams.Outputfolder = handles.Outputfolder;
+                dbscanParams.CurrentChannel = 3;
+                
+                [~, ~, ~, classOut, figOut] = DBSCANHandler(dataCropped(dataCropped(:,12) == 3, 5:6), dbscanParams, ...
+                    dataCropped(dataCropped(:,12) == 3, handles.NDataColumns + 2));
+                
+                
+                handles.CellData{handles.CurrentCellData}(whichPointsInROI & (handles.CellData{handles.CurrentCellData}(:,12) == 3),...
+                    handles.NDataColumns + 3) = classOut;
+                set(figOut, 'Name', 'DBSCAN Active ROI Ch3')
+                
+                handles.ClusterTable = AppendToClusterTable(handles.ClusterTable, 3, handles.CurrentCellData, handles.CurrentROIData, ClusterCh, classOut);
+                
             end
 
             set(handles.handles.MainFig, 'pointer', 'arrow');
@@ -2221,8 +2284,10 @@ function RipleyK_All(~, ~, ~)
                 mkdir(Fun_OutputFolder_name);
                 mkdir(fullfile(Fun_OutputFolder_name, 'RipleyK Plots', 'Ch1'));
                 mkdir(fullfile(Fun_OutputFolder_name, 'RipleyK Plots', 'Ch2'));
+                mkdir(fullfile(Fun_OutputFolder_name, 'RipleyK Plots', 'Ch3'));
                 mkdir(fullfile(Fun_OutputFolder_name, 'RipleyK Results', 'Ch1'));
                 mkdir(fullfile(Fun_OutputFolder_name, 'RipleyK Results', 'Ch2'));
+                mkdir(fullfile(Fun_OutputFolder_name, 'RipleyK Results', 'Ch3'));
             end
 
             [~] = RipleyKHandler(handles, handles.RipleyK.Start, ...
@@ -2318,6 +2383,8 @@ function DBSCAN_All(~, ~, ~)
                     clusterColor = handles.Chan1Color;
                 elseif chan == 2
                     clusterColor = handles.Chan2Color;
+                elseif chan == 3
+                    clusterColor = handles.Chan3Color;
                 end
                 
                 cellROIPair = [];    
@@ -2394,6 +2461,8 @@ function DBSCAN_All(~, ~, ~)
                     ClusterTableChan1 = ClusterSmoothTable;
                 elseif chan == 2
                     ClusterTableChan2 = ClusterSmoothTable;
+                elseif chan == 3
+                    ClusterTableChan3 = ClusterSmoothTable;
                 end
                 
                 
@@ -2464,6 +2533,8 @@ function DoC_All(~, ~, ~)
         mkdir(fullfile(handles.Outputfolder, 'Clus-DoC Results', 'DBSCAN Results', 'Ch1', 'Cluster maps'));
         mkdir(fullfile(handles.Outputfolder, 'Clus-DoC Results', 'DBSCAN Results', 'Ch2'));
         mkdir(fullfile(handles.Outputfolder, 'Clus-DoC Results', 'DBSCAN Results', 'Ch2', 'Cluster maps'));
+        mkdir(fullfile(handles.Outputfolder, 'Clus-DoC Results', 'DBSCAN Results', 'Ch3'));
+        mkdir(fullfile(handles.Outputfolder, 'Clus-DoC Results', 'DBSCAN Results', 'Ch3', 'Cluster maps'));
         mkdir(fullfile(handles.Outputfolder, 'Clus-DoC Results', 'DoC Statistics and Plots'));
     end
     
@@ -2493,6 +2564,8 @@ function DoC_All(~, ~, ~)
             dbscanParams(1).DoCThreshold = handles.DoC.ColoThres;
             dbscanParams(2).Outputfolder = handles.Outputfolder;
             dbscanParams(2).DoCThreshold = handles.DoC.ColoThres;
+            dbscanParams(3).Outputfolder = handles.Outputfolder;
+            dbscanParams(3).DoCThreshold = handles.DoC.ColoThres;
             
             % cd to DoC_Result
             
@@ -2508,19 +2581,21 @@ function DoC_All(~, ~, ~)
                     
             [handles.CellData, DensityROI] = DoCHandler(handles.ROICoordinates, handles.CellData, ... 
                 handles.DoC.Lr_rRad, handles.DoC.Rmax, handles.DoC.Step, ...
-                handles.Chan1Color, handles.Chan2Color, handles.Outputfolder, handles.NDataColumns);
+                handles.Chan1Color, handles.Chan2Color, handles.Chan3Color, handles.Outputfolder, handles.NDataColumns);
             
             %%%%%%%%%%%%%%%
             % Plotting, segmentation, and statistics start here
             
 
             ResultTable = ProcessDoCResults(handles.CellData, handles.NDataColumns, handles.ROICoordinates, ...
-                DensityROI, strcat(handles.Outputfolder, '\Clus-DoC Results'), handles.DoC.ColoThres);
-
+                DensityROI, strcat(handles.Outputfolder, '\Clus-DoC Results'), handles.DoC.ColoThres, 0);
+            ResultTable(:,:,2) = ProcessDoCResults(handles.CellData, handles.NDataColumns, handles.ROICoordinates, ...
+                DensityROI, strcat(handles.Outputfolder, '\Clus-DoC Results'), handles.DoC.ColoThres, 1);
+            
             
             % Run DBSCAN on data used for DoC analysis
-            [ClusterTableCh1, ClusterTableCh2, clusterIDOut, handles.ClusterTable] = DBSCANonDoCResults(handles.CellData, handles.ROICoordinates, ...
-                strcat(handles.Outputfolder, '\Clus-DoC Results'), handles.Chan1Color, handles.Chan2Color, dbscanParams, handles.NDataColumns);
+            [ClusterTableCh1, ClusterTableCh2, ClusterTableCh3, clusterIDOut, handles.ClusterTable] = DBSCANonDoCResults(handles.CellData, handles.ROICoordinates, ...
+                strcat(handles.Outputfolder, '\Clus-DoC Results'), handles.Chan1Color, handles.Chan2Color, handles.Chan3Color, dbscanParams, handles.NDataColumns);
             
             if ~isfield(handles, 'ClusterSmoothTables')
                 handles.ClusterSmoothTables = cell(handles.Nchannels, 1);
@@ -2528,6 +2603,7 @@ function DoC_All(~, ~, ~)
             
             handles.ClusterSmoothTables{1} = ClusterTableCh1;
             handles.ClusterSmoothTables{2} = ClusterTableCh2;
+            handles.ClusterSmoothTables{3} = ClusterTableCh3;
             
             handles = AssignDoCDataToPoints(handles, clusterIDOut);
 
@@ -2542,6 +2618,7 @@ function DoC_All(~, ~, ~)
             
             EvalStatisticsOnDBSCANandDoCResults(ClusterTableCh1, 1, strcat(handles.Outputfolder, '\Clus-DoC Results'));
             EvalStatisticsOnDBSCANandDoCResults(ClusterTableCh2, 2, strcat(handles.Outputfolder, '\Clus-DoC Results'));
+            EvalStatisticsOnDBSCANandDoCResults(ClusterTableCh3, 3, strcat(handles.Outputfolder, '\Clus-DoC Results'));
             
             guidata(handles.handles.MainFig, handles);
             
@@ -2606,6 +2683,7 @@ function handles = AssignDoCDataToPoints(handles, clusterIDOut)
             % Assign cluster IDs to the proper points in CellData
             handles.CellData{k}(whichPointsInROI & (handles.CellData{k}(:,12) == 1), handles.NDataColumns + 3) = clusterIDOut{m, k, 1};
             handles.CellData{k}(whichPointsInROI & (handles.CellData{k}(:,12) == 2), handles.NDataColumns + 3) = clusterIDOut{m, k, 2};
+            handles.CellData{k}(whichPointsInROI & (handles.CellData{k}(:,12) == 3), handles.NDataColumns + 3) = clusterIDOut{m, k, 3};
 
             
         end
